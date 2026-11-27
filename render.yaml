@@ -1,0 +1,39 @@
+# Render Blueprint: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: multi-agent-simulator
+    runtime: python
+    plan: free # sleeps after 15 min without traffic; the app keeps itself awake while a run is active
+    buildCommand: pip install -r requirements.txt
+    # One worker only: active runs live in process memory.
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT --workers 1 --proxy-headers --forwarded-allow-ips='*'
+    healthCheckPath: /healthz
+    # Saving a result commits to results/. Do not redeploy (and restart) for those commits.
+    buildFilter:
+      ignoredPaths:
+        - results/**
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: APP_PASSWORD
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: SESSION_COOKIE_SECURE
+        value: "true"
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: LLM_PROVIDER
+        value: openrouter
+      - key: APP_PUBLIC_URL
+        sync: false
+      - key: STORAGE_BACKEND
+        value: github
+      - key: GITHUB_TOKEN
+        sync: false
+      - key: GITHUB_OWNER
+        sync: false
+      - key: GITHUB_REPO
+        sync: false
+      - key: GITHUB_BRANCH
+        value: main
